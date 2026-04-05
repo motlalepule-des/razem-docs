@@ -2,6 +2,7 @@
 layout: default
 title: Code Examples
 parent: Guides
+grand_parent: Developer Documentation
 nav_order: 2
 ---
 

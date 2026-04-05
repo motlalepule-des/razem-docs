@@ -1,7 +1,8 @@
 ---
 layout: default
 title: Guides
-nav_order: 3
+parent: Developer Documentation
+nav_order: 1
 has_children: true
 permalink: /docs/guides
 ---
