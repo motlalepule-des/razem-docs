@@ -2,6 +2,7 @@
 layout: default
 title: System Architecture
 parent: Architecture
+grand_parent: Developer Documentation
 nav_order: 1
 ---
 
@@ -39,10 +40,10 @@ Razem is built as a modern cloud-native platform following microservices princip
 │         Web Browser   Mobile App   Third-party Apps             │
 └──────────────────────────────┬──────────────────────────────────┘
                                │
-┌──────────────────────────────▼──────────────────────────────────┐
+┌──────────────────────────────▼─────────────────────────────────┐
 │                      API Gateway / CDN                           │
 │              Rate Limiting, Auth, SSL Termination                │
-└───────────┬───────────────────────────────────┬─────────────────┘
+└───────────┬─────────────────────────────┬─────────────────┘
             │                                   │
 ┌───────────▼───────────┐           ┌───────────▼───────────┐
 │   My Razem Account    │           │      Razem API         │
@@ -52,7 +53,7 @@ Razem is built as a modern cloud-native platform following microservices princip
                                                 │
                          ┌──────────────────────┼──────────────────┐
                          │                      │                  │
-              ┌──────────▼───┐     ┌────────────▼────┐  ┌─────────▼────────┐
+              ┌──────────▼───┐     ┌────────────▼────┐  ┌─────────▼─────────┐
               │   Database   │     │   Message Queue  │  │  External APIs   │
               │  PostgreSQL  │     │   (async jobs)   │  │  (Banks, SARS)   │
               └──────────────┘     └─────────────────┘  └──────────────────┘

@@ -2,6 +2,7 @@
 layout: default
 title: Deployment Guide
 parent: Architecture
+grand_parent: Developer Documentation
 nav_order: 2
 ---
 
