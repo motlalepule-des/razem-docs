@@ -34,7 +34,7 @@ Razem is built as a modern cloud-native platform following microservices princip
 ## Core Components
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────────────────┐
 │                         Clients                                  │
 │         Web Browser   Mobile App   Third-party Apps             │
 └──────────────────────────────┬──────────────────────────────────┘
@@ -48,11 +48,11 @@ Razem is built as a modern cloud-native platform following microservices princip
 │   My Razem Account    │           │      Razem API         │
 │   (my-razem-account)  │           │     (razem-api)        │
 │   React/Next.js SPA   │           │   REST API Backend     │
-└───────────────────────┘           └───────────┬────────┘
+└───────────────────────┘           └───────────┬────────────┘
                                                 │
                          ┌──────────────────────┼──────────────────┐
                          │                      │                  │
-              ┌──────────▼───┐     ┌──────────▼────┐  ┌─────────▼────────┐
+              ┌──────────▼───┐     ┌────────────▼────┐  ┌─────────▼────────┐
               │   Database   │     │   Message Queue  │  │  External APIs   │
               │  PostgreSQL  │     │   (async jobs)   │  │  (Banks, SARS)   │
               └──────────────┘     └─────────────────┘  └──────────────────┘
