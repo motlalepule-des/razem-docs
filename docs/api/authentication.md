@@ -2,6 +2,7 @@
 layout: default
 title: Authentication
 parent: API Reference
+grand_parent: Developer Documentation
 nav_order: 1
 ---
 

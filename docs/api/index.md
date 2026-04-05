@@ -1,7 +1,8 @@
 ---
 layout: default
 title: API Reference
-nav_order: 4
+parent: Developer Documentation
+nav_order: 2
 has_children: true
 permalink: /docs/api
 ---
