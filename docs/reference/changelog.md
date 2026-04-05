@@ -2,6 +2,7 @@
 layout: default
 title: Changelog
 parent: Reference
+grand_parent: Developer Documentation
 nav_order: 2
 ---
 
@@ -10,6 +11,9 @@ nav_order: 2
 Track API changes, new features, and breaking changes across Razem API versions.
 
 ---
+
+{: .note }
+For a non-technical summary of recent updates, see [What's New](/razem-docs/docs/account/whats-new).
 
 ## API v1 (Current)
 

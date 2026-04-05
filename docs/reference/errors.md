@@ -2,6 +2,7 @@
 layout: default
 title: Error Reference
 parent: Reference
+grand_parent: Developer Documentation
 nav_order: 1
 ---
 

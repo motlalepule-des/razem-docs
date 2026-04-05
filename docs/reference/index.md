@@ -1,7 +1,8 @@
 ---
 layout: default
 title: Reference
-nav_order: 7
+parent: Developer Documentation
+nav_order: 4
 has_children: true
 permalink: /docs/reference
 ---
