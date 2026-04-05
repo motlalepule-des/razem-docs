@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Account Security
-parent: My Razem Account
+parent: Business Guide
 nav_order: 3
 ---
 

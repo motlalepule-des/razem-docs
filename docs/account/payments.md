@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Managing Payments
-parent: My Razem Account
+parent: Business Guide
 nav_order: 2
 ---
 
