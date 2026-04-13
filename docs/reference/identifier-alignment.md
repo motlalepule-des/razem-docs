@@ -31,18 +31,131 @@ across the four Razem repositories and documents where they must stay in sync.
 
 ---
 
+## Axios Client Setup — The Golden Rule
+
+All three front-ends use two axios instances. The version prefix **must live in
+`apiClient.baseURL`**, never in the endpoint path strings.
+
+```typescript
+// Correct — all three apps must follow this pattern exactly
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Versioned API client — for all /api/v1/* calls
+export const apiClient = axios.create({
+  baseURL: `${API_BASE_URL}/api/v1`,
+  // ...
+});
+
+// Auth client — OIDC /connect/* calls only (no version prefix)
+export const authClient = axios.create({
+  baseURL: API_BASE_URL,
+  // ...
+});
+```
+
+| Client | baseURL | Used for |
+|:---|:---|:---|
+| `apiClient` | `${API_BASE_URL}/api/v1` | All REST API calls |
+| `authClient` | `${API_BASE_URL}` | OIDC `/connect/*` flows only |
+
+> **Fixed (2025-04-13):** `my-razem-account` had `apiClient.baseURL = API_BASE_URL` (no
+> version). Updated to `${API_BASE_URL}/api/v1` to match `razem-admin-portal` and
+> `razem-sme-hub`.
+
+---
+
+## Endpoint Path Convention
+
+Because `apiClient.baseURL` already includes `/api/v1`, **endpoint path strings must
+not start with `/api/v1`**.
+
+```typescript
+// ✅ Correct
+CONFIG: '/app/configuration'
+USERS: { ME: '/platform/users/me' }
+
+// ❌ Wrong — results in /api/v1/api/v1/app/configuration
+CONFIG: '/api/v1/app/configuration'
+```
+
+OIDC paths are the **only exception** — they are called via `authClient` (bare
+baseURL) and naturally have no version prefix:
+
+```typescript
+// ✅ Correct — authClient, no version needed
+AUTH: {
+  TOKEN:    '/connect/token',
+  LOGOUT:   '/connect/logout',
+  USERINFO: '/connect/userinfo',
+}
+```
+
+> **Fixed (2025-04-13):** `razem-sme-hub` had `/api/v1/` embedded in CONFIG, USERS,
+> TEAM, PLATFORM, SUBSCRIPTION, and AUTH.REGISTER paths. All stripped.
+> `my-razem-account` endpoint paths similarly stripped after its axios.ts was aligned.
+
+---
+
+## Versioned Platform Endpoints (shared across front-ends)
+
+All paths below are relative to `apiClient.baseURL` (i.e. already under `/api/v1`).
+
+| Endpoint group | Path |
+|:---|:---|
+| App configuration | `/app/configuration` |
+| Current user profile | `/platform/users/me` |
+| User's tenant list | `/platform/users/me/tenants` |
+| User by ID | `/platform/users/{id}` |
+| User by identity ID | `/platform/users/by-identity/{identityUserId}` |
+| Tenant memberships list | `/platform/tenants/{tenantId}/memberships` |
+| Membership by ID | `/platform/tenants/{tenantId}/memberships/{membershipId}` |
+| Add role to membership | `/platform/tenants/{tenantId}/memberships/{membershipId}/roles` |
+| Remove role from membership | `/platform/tenants/{tenantId}/memberships/{membershipId}/roles/{roleName}` |
+| Send invite | `/platform/tenants/{tenantId}/invites` |
+| Accept invite | `/platform/invites/accept` |
+| Active subscription | `/tenants/{tenantId}/subscriptions/active` |
+| Create subscription | `/tenants/{tenantId}/subscriptions` |
+| Activate subscription | `/tenants/{tenantId}/subscriptions/{id}/activate` |
+| Suspend subscription | `/tenants/{tenantId}/subscriptions/{id}/suspend` |
+| Cancel subscription | `/tenants/{tenantId}/subscriptions/{id}/cancel` |
+| User registration | `/identity/register` |
+| Send email OTP | `/identity/otp/send` |
+| Verify email OTP | `/identity/otp/verify` |
+| Change password | `/identity/password/change` |
+| User app access list | `/access/my-apps` |
+
+---
+
+## `ENDPOINTS.SUBSCRIPTION` Naming
+
+The subscription endpoint group key must be **singular** (`SUBSCRIPTION`) across
+all front-ends.
+
+```typescript
+// ✅ Correct
+ENDPOINTS.SUBSCRIPTION.ACTIVE(tenantId)
+ENDPOINTS.SUBSCRIPTION.CANCEL(tenantId, id)
+
+// ❌ Wrong
+ENDPOINTS.SUBSCRIPTIONS.ACTIVE(tenantId)
+```
+
+> **Fixed (2025-04-13):** `razem-admin-portal` used `ENDPOINTS.SUBSCRIPTIONS` (plural).
+> Renamed to `ENDPOINTS.SUBSCRIPTION` to match `razem-sme-hub`.
+
+---
+
 ## Shared Core Types
 
-All three front-ends consume the same `/api/v1/app/configuration` endpoint and share
-these foundational types. **Any change to the API contract must be mirrored in all three.**
+All three front-ends consume `/app/configuration` and share these foundational
+types. **Any change to the API contract must be mirrored in all three.**
 
 ### `ApiResponse<T>` — API envelope
 
 ```typescript
-// Canonical shape — matches razem-api Result<T> serialisation
 interface ApiResponse<T> {
   isSuccess: boolean;
-  code: string;         // e.g. "Ok", "ValidationFailed", "SYSTEM.UNEXPECTED"
+  code: string;         // e.g. "Ok", "ValidationFailed", "NotFound"
   message?: string;
   value?: T;
   errors: ErrorItem[];
@@ -50,14 +163,13 @@ interface ApiResponse<T> {
 }
 ```
 
-> **Fixed (2025-04-13):** `razem-admin-portal` had `code?: number` — corrected to `code: string`.
-> The API always returns string result codes; the numeric type was wrong and would silently
-> drop error-code comparisons at runtime.
+> **Fixed (2025-04-13):** `razem-admin-portal` had `code?: number`. Corrected to
+> `code: string` — the API always returns string result codes.
 
 ### `ResultCode` enum
 
-Both `razem-admin-portal` and `razem-sme-hub` maintain a `src/constants/result-code.ts`
-that mirrors the API's `ResultCode` C# enum:
+Both `razem-admin-portal` and `razem-sme-hub` maintain `src/constants/result-code.ts`
+mapping the API's C# `ResultCode` enum:
 
 ```typescript
 export enum ResultCode {
@@ -76,14 +188,13 @@ export enum ResultCode {
 }
 ```
 
-> **Fixed (2025-04-13):** `razem-admin-portal` was **missing** `src/constants/result-code.ts`
-> even though `src/types/result.ts` imports `ResultCode` from it — causing a compile error.
-> File added to match `razem-sme-hub`.
+> **Fixed (2025-04-13):** `razem-admin-portal` was missing this file even though
+> `src/types/result.ts` imports it. File created.
 
 ### `ErrorItem`
 
 ```typescript
-// Identical across all three front-ends (same SHA in git)
+// Identical across all three front-ends
 interface ErrorItem {
   code: string;
   message: string;
@@ -92,41 +203,18 @@ interface ErrorItem {
 }
 ```
 
-### `AppConfiguration`
-
-```typescript
-interface AppConfiguration {
-  currentUser: CurrentUser;
-  tenant?: TenantInfo | null;
-  roles: string[];           // e.g. ["admin", "SME.Owner"]
-  permissions: string[];     // dot-notation strings, e.g. "Users.Read"
-  features: Record<string, string>; // feature-flag key → "true" / "false"
-  settings: Record<string, string>;
-}
-```
-
 ### `CurrentUser`
 
 ```typescript
 interface CurrentUser {
-  identityUserId: string;  // GUID — maps to IdentityServer subject
+  identityUserId: string;
   email: string;
-  fullName: string | null; // null when profile is incomplete
+  fullName: string | null; // always present from API; null when profile incomplete
 }
 ```
 
-> **Fixed (2025-04-13):** `razem-admin-portal` had `fullName?: string | null` (doubly-optional).
-> Aligned to `string | null` — the API always emits the field; it is nullable, not absent.
-
-### `TenantInfo`
-
-```typescript
-interface TenantInfo {
-  tenantId: string;      // GUID
-  tenancyName: string;   // URL-safe slug
-  displayName: string;
-}
-```
+> **Fixed (2025-04-13):** `razem-admin-portal` had `fullName?: string | null`
+> (doubly-optional). Aligned to `string | null`.
 
 ### `CurrentTenant`
 
@@ -138,136 +226,70 @@ interface CurrentTenant {
 }
 ```
 
-> **Fixed (2025-04-13):** `razem-sme-hub` had `id: number | null`. Tenant IDs are GUIDs
-> (strings) in the API domain model (`SeedIds.cs`, entity keys). Changed to `string | null`
-> to match `razem-admin-portal` and the API.
+> **Fixed (2025-04-13):** `razem-sme-hub` had `id: number | null`. Tenant IDs are
+> GUIDs (strings) in the API domain model. Changed to `string | null`.
+
+### `AppConfiguration`
+
+```typescript
+interface AppConfiguration {
+  currentUser: CurrentUser;
+  tenant?: TenantInfo | null;
+  roles: string[];
+  permissions: string[];           // dot-notation, e.g. "Users.Read"
+  features: Record<string, string>; // feature key → "true" / "false"
+  settings: Record<string, string>;
+}
+```
+
+### `TenantInfo`
+
+```typescript
+interface TenantInfo {
+  tenantId: string;    // GUID
+  tenancyName: string; // URL-safe slug
+  displayName: string;
+}
+```
 
 ### `RegisterUserResponse`
 
 ```typescript
 interface RegisterUserResponse {
-  appUserId: string;        // platform user ID (GUID)
-  identityUserId: string;   // IdentityServer user ID (GUID)
+  appUserId: string;       // platform user ID (GUID)
+  identityUserId: string;  // IdentityServer user ID (GUID)
   email: string;
   userName: string;
   tenantLinked: boolean;
-  tenantId: string | null;  // GUID of auto-created tenant, or null
+  tenantId: string | null; // GUID of auto-created tenant, or null
 }
 ```
 
 ---
 
-## API Endpoint Versioning
-
-All backend routes are under the `/api/v1/` version prefix. Front-ends **must** include
-this prefix in every endpoint constant.
-
-### Versioned platform endpoints (shared across front-ends)
-
-| Endpoint | Correct path |
-|:---|:---|
-| App configuration | `/api/v1/app/configuration` |
-| Current user profile | `/api/v1/platform/users/me` |
-| User's tenant list | `/api/v1/platform/users/me/tenants` |
-| User by ID | `/api/v1/platform/users/{id}` |
-| User by identity ID | `/api/v1/platform/users/by-identity/{identityUserId}` |
-| Tenant memberships list | `/api/v1/platform/tenants/{tenantId}/memberships` |
-| Membership by ID | `/api/v1/platform/tenants/{tenantId}/memberships/{membershipId}` |
-| Add role to membership | `/api/v1/platform/tenants/{tenantId}/memberships/{membershipId}/roles` |
-| Remove role from membership | `/api/v1/platform/tenants/{tenantId}/memberships/{membershipId}/roles/{roleName}` |
-| Send invite | `/api/v1/platform/tenants/{tenantId}/invites` |
-| Accept invite | `/api/v1/platform/invites/accept` |
-| Active subscription | `/api/v1/tenants/{tenantId}/subscriptions/active` |
-| Create subscription | `/api/v1/tenants/{tenantId}/subscriptions` |
-| Activate subscription | `/api/v1/tenants/{tenantId}/subscriptions/{id}/activate` |
-| Suspend subscription | `/api/v1/tenants/{tenantId}/subscriptions/{id}/suspend` |
-| Cancel subscription | `/api/v1/tenants/{tenantId}/subscriptions/{id}/cancel` |
-| User registration | `/api/v1/identity/register` |
-| Send email OTP | `/api/v1/identity/otp/send` |
-| Verify email OTP | `/api/v1/identity/otp/verify` |
-| Change password | `/api/v1/identity/password/change` |
-| User app access list | `/api/v1/access/my-apps` |
-
-> **Fixed (2025-04-13):** `razem-admin-portal` was calling all platform, membership,
-> invite, and subscription endpoints **without** the `/api/v1/` prefix — requests were
-> resolving to 404 or hitting the wrong base URL.
-
-### OIDC/Connect endpoints (no version prefix — these are standard OIDC)
-
-| Endpoint | Path |
-|:---|:---|
-| Token | `/connect/token` |
-| Logout | `/connect/logout` |
-| Authorize | `/connect/authorize` |
-| UserInfo | `/connect/userinfo` |
-| Login (custom) | `/connect/login` |
-
----
-
-## `ENDPOINTS.SUBSCRIPTION` Naming
-
-The subscription endpoint group key must be singular (`SUBSCRIPTION`) across all front-ends.
-
-```typescript
-// Correct — singular
-ENDPOINTS.SUBSCRIPTION.ACTIVE(tenantId)
-ENDPOINTS.SUBSCRIPTION.CANCEL(tenantId, id)
-```
-
-> **Fixed (2025-04-13):** `razem-admin-portal` used `ENDPOINTS.SUBSCRIPTIONS` (plural).
-> Renamed to `ENDPOINTS.SUBSCRIPTION` to match `razem-sme-hub`.
-
----
-
 ## Feature Flag Constants
 
-Feature flags use a dot-notation key that is **intentionally different** per application
-because they map to distinct flag namespaces in the API:
+Feature flag base keys differ **by design** — they map to distinct flag namespaces:
 
 | Repo | `BASE_FEATURE_KEY` | Scope |
 |:---|:---|:---|
 | `razem-admin-portal` | `Razem.Features` | Platform-wide admin flags |
 | `razem-sme-hub` | `Razem.Features.Tenant.SmeHub` | SME tenant-scoped flags |
 
-This is **by design** — do not unify these values.
-
-### SME Hub feature flags (tenant-scoped)
-
-| Constant | Full key |
-|:---|:---|
-| `FEATURES.ENABLED` | `Razem.Features.Tenant.SmeHub.Enabled` |
-| `FEATURES.BANKING` | `Razem.Features.Tenant.SmeHub.Banking.Enabled` |
-| `FEATURES.WALLET` | `Razem.Features.Tenant.SmeHub.Wallet.Enabled` |
-| `FEATURES.COMPLIANCE` | `Razem.Features.Tenant.SmeHub.Compliance.Enabled` |
-| `FEATURES.FINANCIAL_HEALTH` | `Razem.Features.Tenant.SmeHub.FinancialHealth.Enabled` |
-| `FEATURES.CASHFLOW` | `Razem.Features.Tenant.SmeHub.Cashflow.Enabled` |
-| `FEATURES.INVOICES` | `Razem.Features.Tenant.SmeHub.Invoicing.Enabled` |
-| `FEATURES.RECONCILIATION` | `Razem.Features.Tenant.SmeHub.Reconciliation.Enabled` |
-| `FEATURES.DAILY_CLOSE` | `Razem.Features.Tenant.SmeHub.DailyClose.Enabled` |
-| `FEATURES.CLIENTS` | `Razem.Features.Tenant.SmeHub.Clients.Enabled` |
-| `FEATURES.SUBSCRIPTION` | `Razem.Features.Tenant.SmeHub.Subscription.Enabled` |
-
-### Admin Portal feature flags (platform-wide)
-
-| Constant | Full key |
-|:---|:---|
-| `FEATURES.ENABLED` | `Razem.Features.Enabled` |
-| `FEATURES.API_MANAGEMENT` | `Razem.Features.ApiManagement.Enabled` |
-| `FEATURES.IMPERSONATION` | `Razem.Features.Impersonation.Enabled` |
-| `FEATURES.SUBSCRIPTION` | `Razem.Features.Subscription.Enabled` |
+Do not unify these values.
 
 ---
 
-## Membership / Team / Organization Naming
+## Membership / Team / Organization UI Naming
 
-The underlying API resource is `memberships` in all cases. The three portals label
-it differently in the UI — this is intentional:
+The API resource is always `memberships`. The three portals label it differently
+in the UI — this is intentional:
 
-| Repo | UI label | API resource path |
+| Repo | UI label | API path |
 |:---|:---|:---|
-| `my-razem-account` | Organizations | `/api/v1/platform/tenants/{id}/memberships` |
-| `razem-admin-portal` | Memberships | `/api/v1/platform/tenants/{id}/memberships` |
-| `razem-sme-hub` | Team | `/api/v1/platform/tenants/{id}/memberships` |
+| `my-razem-account` | Organizations | `/platform/tenants/{id}/memberships` |
+| `razem-admin-portal` | Memberships | `/platform/tenants/{id}/memberships` |
+| `razem-sme-hub` | Team | `/platform/tenants/{id}/memberships` |
 
 When writing shared code or documentation, always use the API term **membership**.
 
@@ -275,53 +297,29 @@ When writing shared code or documentation, always use the API term **membership*
 
 ## Phone / Mobile Field Naming
 
-The user profile has two different field names depending on context:
-
-| Context | Field name | Notes |
+| Context | Field name | Endpoint |
 |:---|:---|:---|
-| Registration request | `mobileNumber` | Used in `RegisterUserRequest` (my-razem-account) |
-| Profile update request | `phoneNumber` | Used in `UpdateProfileRequest` (my-razem-account) |
+| Registration | `mobileNumber` | `/identity/register` |
+| Profile update | `phoneNumber` | `/platform/users/me` |
 
-This is a known inconsistency in the API surface. The registration endpoint (`/api/v1/identity/register`)
-accepts `mobileNumber` while the profile update endpoint (`/api/v1/platform/users/me`) uses `phoneNumber`.
-Front-ends should use the field name that matches the specific endpoint being called.
+This is a known API surface inconsistency. Use the field name that matches the
+specific endpoint being called.
 
 ---
 
 ## Error Response Format
 
-The internal API response envelope differs from the external (Open Banking) API format.
-Use the following format for all internal calls:
-
 ```json
 {
   "isSuccess": false,
-  "code": "VALIDATION.FAILED",
+  "code": "ValidationFailed",
   "message": "One or more fields failed validation.",
   "errors": [
-    {
-      "code": "VALIDATION.REQUIRED",
-      "message": "Email is required.",
-      "field": "email"
-    }
+    { "code": "VALIDATION.REQUIRED", "message": "Email is required.", "field": "email" }
   ],
   "correlationId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 ```
-
-### Common `code` values (string)
-
-| Code | Meaning |
-|:---|:---|
-| `Ok` | Request succeeded |
-| `Created` | Resource created |
-| `ValidationFailed` | One or more fields invalid |
-| `NotFound` | Resource does not exist |
-| `Conflict` | Duplicate or state conflict |
-| `Unauthorized` | Token missing or invalid |
-| `Forbidden` | Valid token, insufficient permission |
-| `DependencyFailure` | External service call failed |
-| `UnexpectedError` | Unhandled server error |
 
 ---
 
@@ -331,28 +329,25 @@ Use the following format for all internal calls:
 |:--|:---|:---|:---|:---|:---|
 | 1 | `ApiResponse.code` type | `razem-admin-portal` | `number?` | `string` | **Fixed** |
 | 2 | `src/constants/result-code.ts` | `razem-admin-portal` | Missing | Added | **Fixed** |
-| 3 | `ENDPOINTS.CONFIG` | `razem-admin-portal` | `/app/configuration` | `/api/v1/app/configuration` | **Fixed** |
-| 4 | `ENDPOINTS.USERS.*` | `razem-admin-portal` | `/platform/users/...` | `/api/v1/platform/users/...` | **Fixed** |
-| 5 | `ENDPOINTS.MEMBERSHIPS.*` | `razem-admin-portal` | `/platform/tenants/...` | `/api/v1/platform/tenants/...` | **Fixed** |
-| 6 | `ENDPOINTS.INVITES.*` | `razem-admin-portal` | `/platform/invites/...` | `/api/v1/platform/invites/...` | **Fixed** |
-| 7 | `ENDPOINTS.SUBSCRIPTIONS` | `razem-admin-portal` | `SUBSCRIPTIONS` (plural) | `SUBSCRIPTION` (singular) | **Fixed** |
-| 8 | `ENDPOINTS.SUBSCRIPTION.*` | `razem-admin-portal` | `/tenants/...` | `/api/v1/tenants/...` | **Fixed** |
-| 9 | `CurrentTenant.id` type | `razem-sme-hub` | `number \| null` | `string \| null` | **Fixed** |
-| 10 | `CurrentUser.fullName` type | `razem-admin-portal` | `string \| null \| undefined` | `string \| null` | **Fixed** |
-| 11 | Feature flag base key | `admin-portal` vs `sme-hub` | — | — | By design |
-| 12 | Route structure (flat vs nested) | `admin-portal` vs `sme-hub` | — | — | By design |
-| 13 | UI term for memberships | All portals | — | — | By design |
-| 14 | `mobileNumber` vs `phoneNumber` | `my-razem-account` | — | — | API surface inconsistency |
+| 3 | `apiClient.baseURL` | `my-razem-account` | `API_BASE_URL` | `${API_BASE_URL}/api/v1` | **Fixed** |
+| 4 | `/api/v1/` in endpoint paths | `razem-sme-hub` | Present in CONFIG, USERS, TEAM, PLATFORM, SUBSCRIPTION, AUTH.REGISTER | Stripped | **Fixed** |
+| 5 | `/api/v1/` in endpoint paths | `my-razem-account` | Present in non-OIDC paths | Stripped | **Fixed** |
+| 6 | `ENDPOINTS.SUBSCRIPTIONS` | `razem-admin-portal` | `SUBSCRIPTIONS` (plural) | `SUBSCRIPTION` (singular) | **Fixed** |
+| 7 | `CurrentTenant.id` type | `razem-sme-hub` | `number \| null` | `string \| null` | **Fixed** |
+| 8 | `CurrentUser.fullName` type | `razem-admin-portal` | `string \| null \| undefined` | `string \| null` | **Fixed** |
+| 9 | Feature flag base key | `admin-portal` vs `sme-hub` | — | — | By design |
+| 10 | Route structure (flat vs nested) | `admin-portal` vs `sme-hub` | — | — | By design |
+| 11 | UI term for memberships | All portals | — | — | By design |
+| 12 | `mobileNumber` vs `phoneNumber` | `my-razem-account` | — | — | API surface inconsistency |
 
 ---
 
 ## Checklist: Adding a New Shared Endpoint
 
-When a new API route is added to `razem-api`, follow this checklist before merging:
-
-- [ ] Route path starts with `/api/v1/`
-- [ ] Path added to `ENDPOINTS` in every front-end that needs it
+- [ ] API route is under `api/v1/` in `razem-api`
+- [ ] Endpoint path added to `ENDPOINTS` in relevant front-ends **without** the `/api/v1/` prefix
+- [ ] OIDC / connect endpoints use `authClient` (via `useAuthClient: true`); all others use `apiClient`
 - [ ] TypeScript request/response types match DTO field names exactly (case-sensitive)
-- [ ] `code` comparisons use `ResultCode` enum values (strings), not numbers
-- [ ] Any new error codes are added to `ResultCode` enum in all three front-ends
-- [ ] Documentation updated in `razem-docs/docs/reference/identifier-alignment.md`
+- [ ] `code` comparisons use `ResultCode` enum string values, not numbers
+- [ ] New error codes added to `ResultCode` in all three front-ends
+- [ ] This document updated in `razem-docs/docs/reference/identifier-alignment.md`
