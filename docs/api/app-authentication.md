@@ -41,7 +41,7 @@ Apps never handle passwords directly — they exchange user credentials for shor
 
 ### Password Grant (SPA / First-Party Apps)
 
-Used by first-party Razem portals (e.g. My Razem Account, Admin Portal, SME Hub) where the app is trusted to collect user credentials directly.
+Used by first-party Razem portals (e.g. My Razem Account, Admin Portal, Business) where the app is trusted to collect user credentials directly.
 
 #### 1. Request an Access Token
 
@@ -213,7 +213,7 @@ Content-Type: application/x-www-form-urlencoded
 | `razem-account-spa`        | My Razem Account portal    |
 | `razem-admin-portal`       | Admin Portal               |
 | `razem-developer-portal`   | Developer Portal           |
-| `razem-smehub-portal`      | SME Hub Portal             |
+| `razem-business-portal`    | Business Portal            |
 
 ---
 
