@@ -26,7 +26,7 @@ across the four Razem repositories and documents where they must stay in sync.
 |:---|:---|:---|
 | `razem-api` | .NET / C# | Backend — source of truth for all identifiers |
 | `razem-admin-portal` | React / TypeScript | Platform admin front-end |
-| `razem-sme-hub` | React / TypeScript | SME tenant front-end |
+| `razem-business` | React / TypeScript | Business front-end |
 | `my-razem-account` | React / TypeScript | End-user account portal |
 
 ---
@@ -60,7 +60,7 @@ export const authClient = axios.create({
 
 > **Fixed (2025-04-13):** `my-razem-account` had `apiClient.baseURL = API_BASE_URL` (no
 > version). Updated to `${API_BASE_URL}/api/v1` to match `razem-admin-portal` and
-> `razem-sme-hub`.
+> `razem-business`.
 
 ---
 
@@ -90,7 +90,7 @@ AUTH: {
 }
 ```
 
-> **Fixed (2025-04-13):** `razem-sme-hub` had `/api/v1/` embedded in CONFIG, USERS,
+> **Fixed (2025-04-13):** `razem-business` had `/api/v1/` embedded in CONFIG, USERS,
 > TEAM, PLATFORM, SUBSCRIPTION, and AUTH.REGISTER paths. All stripped.
 > `my-razem-account` endpoint paths similarly stripped after its axios.ts was aligned.
 
@@ -141,7 +141,7 @@ ENDPOINTS.SUBSCRIPTIONS.ACTIVE(tenantId)
 ```
 
 > **Fixed (2025-04-13):** `razem-admin-portal` used `ENDPOINTS.SUBSCRIPTIONS` (plural).
-> Renamed to `ENDPOINTS.SUBSCRIPTION` to match `razem-sme-hub`.
+> Renamed to `ENDPOINTS.SUBSCRIPTION` to match `razem-business`.
 
 ---
 
@@ -168,7 +168,7 @@ interface ApiResponse<T> {
 
 ### `ResultCode` enum
 
-Both `razem-admin-portal` and `razem-sme-hub` maintain `src/constants/result-code.ts`
+Both `razem-admin-portal` and `razem-business` maintain `src/constants/result-code.ts`
 mapping the API's C# `ResultCode` enum:
 
 ```typescript
@@ -226,7 +226,7 @@ interface CurrentTenant {
 }
 ```
 
-> **Fixed (2025-04-13):** `razem-sme-hub` had `id: number | null`. Tenant IDs are
+> **Fixed (2025-04-13):** `razem-business` had `id: number | null`. Tenant IDs are
 > GUIDs (strings) in the API domain model. Changed to `string | null`.
 
 ### `AppConfiguration`
@@ -274,7 +274,7 @@ Feature flag base keys differ **by design** — they map to distinct flag namesp
 | Repo | `BASE_FEATURE_KEY` | Scope |
 |:---|:---|:---|
 | `razem-admin-portal` | `Razem.Features` | Platform-wide admin flags |
-| `razem-sme-hub` | `Razem.Features.Tenant.SmeHub` | SME tenant-scoped flags |
+| `razem-business` | `Razem.Features.Tenant.Business` | Business tenant-scoped flags |
 
 Do not unify these values.
 
@@ -289,7 +289,7 @@ in the UI — this is intentional:
 |:---|:---|:---|
 | `my-razem-account` | Organizations | `/platform/tenants/{id}/memberships` |
 | `razem-admin-portal` | Memberships | `/platform/tenants/{id}/memberships` |
-| `razem-sme-hub` | Team | `/platform/tenants/{id}/memberships` |
+| `razem-business` | Team | `/platform/tenants/{id}/memberships` |
 
 When writing shared code or documentation, always use the API term **membership**.
 
@@ -330,13 +330,13 @@ specific endpoint being called.
 | 1 | `ApiResponse.code` type | `razem-admin-portal` | `number?` | `string` | **Fixed** |
 | 2 | `src/constants/result-code.ts` | `razem-admin-portal` | Missing | Added | **Fixed** |
 | 3 | `apiClient.baseURL` | `my-razem-account` | `API_BASE_URL` | `${API_BASE_URL}/api/v1` | **Fixed** |
-| 4 | `/api/v1/` in endpoint paths | `razem-sme-hub` | Present in CONFIG, USERS, TEAM, PLATFORM, SUBSCRIPTION, AUTH.REGISTER | Stripped | **Fixed** |
+| 4 | `/api/v1/` in endpoint paths | `razem-business` | Present in CONFIG, USERS, TEAM, PLATFORM, SUBSCRIPTION, AUTH.REGISTER | Stripped | **Fixed** |
 | 5 | `/api/v1/` in endpoint paths | `my-razem-account` | Present in non-OIDC paths | Stripped | **Fixed** |
 | 6 | `ENDPOINTS.SUBSCRIPTIONS` | `razem-admin-portal` | `SUBSCRIPTIONS` (plural) | `SUBSCRIPTION` (singular) | **Fixed** |
-| 7 | `CurrentTenant.id` type | `razem-sme-hub` | `number \| null` | `string \| null` | **Fixed** |
+| 7 | `CurrentTenant.id` type | `razem-business` | `number \| null` | `string \| null` | **Fixed** |
 | 8 | `CurrentUser.fullName` type | `razem-admin-portal` | `string \| null \| undefined` | `string \| null` | **Fixed** |
-| 9 | Feature flag base key | `admin-portal` vs `sme-hub` | — | — | By design |
-| 10 | Route structure (flat vs nested) | `admin-portal` vs `sme-hub` | — | — | By design |
+| 9 | Feature flag base key | `admin-portal` vs `business` | — | — | By design |
+| 10 | Route structure (flat vs nested) | `admin-portal` vs `business` | — | — | By design |
 | 11 | UI term for memberships | All portals | — | — | By design |
 | 12 | `mobileNumber` vs `phoneNumber` | `my-razem-account` | — | — | API surface inconsistency |
 
