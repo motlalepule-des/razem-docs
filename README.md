@@ -17,32 +17,45 @@ razem-docs/
 ├── .github/
 │   └── workflows/
 │       └── pages.yml           # GitHub Pages deployment workflow
-└── docs/
-    ├── guides/
-    │   ├── index.md            # Guides overview
-    │   ├── getting-started.md  # Getting started guide
-    │   ├── examples.md         # Code examples
-    │   └── webhooks.md         # Webhooks integration guide
-    ├── api/
-    │   ├── index.md            # API reference overview
-    │   ├── authentication.md   # Authentication guide
-    │   ├── accounts.md         # Accounts API
-    │   ├── payments.md         # Payments & Transactions API
-    │   └── beneficiaries.md    # Beneficiaries API
-    ├── account/
-    │   ├── index.md            # My Razem Account overview
-    │   ├── setup.md            # Account setup & KYC
-    │   ├── payments.md         # Managing payments (portal)
-    │   └── security.md         # Account security
-    ├── architecture/
-    │   ├── index.md            # Architecture overview
-    │   ├── overview.md         # System architecture
-    │   └── deployment.md       # Deployment guide
-    └── reference/
-        ├── index.md            # Reference overview
-        ├── errors.md           # Error codes reference
-        └── changelog.md        # API changelog
+├── docs/
+│   ├── guides/
+│   │   ├── index.md            # Guides overview
+│   │   ├── getting-started.md  # Getting started guide
+│   │   ├── examples.md         # Code examples
+│   │   └── webhooks.md         # Webhooks integration guide
+│   ├── api/
+│   │   ├── index.md            # API reference overview
+│   │   ├── authentication.md   # Authentication guide
+│   │   ├── accounts.md         # Accounts API
+│   │   ├── payments.md         # Payments & Transactions API
+│   │   └── beneficiaries.md    # Beneficiaries API
+│   ├── account/
+│   │   ├── index.md            # My Razem Account overview
+│   │   ├── setup.md            # Account setup & KYC
+│   │   ├── payments.md         # Managing payments (portal)
+│   │   └── security.md         # Account security
+│   ├── architecture/
+│   │   ├── index.md            # Architecture overview
+│   │   ├── overview.md         # System architecture
+│   │   └── deployment.md       # Deployment guide
+│   └── reference/
+│       ├── index.md            # Reference overview
+│       ├── errors.md           # Error codes reference
+│       └── changelog.md        # API changelog
+└── testing/                    # Platform testing documentation
+    ├── README.md               # Testing docs index
+    ├── test-strategy.md         # Approach, tooling, how to run
+    ├── inventory/              # Automated test inventory per repo
+    └── test-cases/             # Test-case specs for key flows
 ```
+
+## Testing Documentation
+
+The [`testing/`](testing/) folder is a platform-wide reference for testing,
+kept separate from the published Jekyll site. It contains an **automated test
+inventory** for every Razem repository and **test-case specifications** for the
+platform's key flows (authentication, business registration, payments, account
+management). Start at [`testing/README.md`](testing/README.md).
 
 ## Running Locally
 
