@@ -1,0 +1,26 @@
+# markdownlint-cli2 configuration
+# Docs: https://github.com/DavidAnson/markdownlint-cli2
+
+config:
+  # Enable default rules
+  default: true
+
+  # Disable line-length (prose docs commonly exceed 80 cols)
+  MD013: false
+
+  # Allow inline HTML (common in Jekyll/Just-the-Docs pages)
+  MD033: false
+
+  # Allow duplicate headings across sibling sections (e.g. "Overview")
+  MD024:
+    siblings_only: true
+
+  # First line in file does not need to be a top-level heading
+  # (Jekyll pages typically start with front matter)
+  MD041: false
+
+ignores:
+  - "_site/"
+  - "vendor/"
+  - "node_modules/"
+  - ".github/"

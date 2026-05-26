@@ -7,3 +7,7 @@ group :jekyll_plugins do
   gem "jekyll-seo-tag"
   gem "jekyll-github-metadata"
 end
+
+group :test do
+  gem "html-proofer", "~> 5.0"
+end
